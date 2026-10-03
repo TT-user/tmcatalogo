@@ -1,0 +1,5 @@
+state/inventario-cache.jsonl
+state/*.log
+__pycache__/
+*.pyc
+.env

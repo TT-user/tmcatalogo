@@ -87,8 +87,9 @@ Os títulos são em inglês, sem padrão fixo, mas trazem quase sempre:
 Exemplos: `2627 River Plate Away Long Sleeved Player S-4XL`, `26/27 Al Nassr Home #Player #Ronaldo #7`, `2025-26 NBA Dallas Mavericks 11#IRVING`.
 Há títulos repetidos (o mesmo produto cadastrado duas vezes, com ids diferentes).
 
-## Primeira estimativa de volume (a Fase 1 mede direito)
+## Volume
 
-- Página 1 da galeria: 120 álbuns, 1.052 fotos, **média de 8,8 fotos por álbum**.
-- 4.519 álbuns × 8,8 ≈ **40 mil fotos**.
-- Originais de ~180–290 KB → **~9 GB** brutos; em WebP 1200 px, provavelmente entre **1,4 e 2,7 GB**.
+A estimativa feita aqui na Fase 0 (originais de ~250 KB, ~9 GB) estava errada:
+as 3 fotos testadas eram leves. A medição da Fase 1, numa amostra de 300 fotos,
+deu média de 1,2 MB por original. Os números certos estão em
+`data/inventario-resumo.md`.
