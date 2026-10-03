@@ -1,1 +1,2 @@
 todas
+# 2a execução: destroca frente/costas dos álbuns baixados com a regra antiga

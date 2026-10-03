@@ -108,12 +108,9 @@ def foto(url):
 def processar(a, pasta):
     urls = a["urls_fotos"]
     capa = a["frente"] if a["frente"] is not None else 0
-    outra = outra_face(urls, capa, lambda u: pedir(u).content)
-    # com nome e número de jogador no título (#Luciano #10), a capa costuma ser a costas
-    if outra is not None and re.search(r"#[A-Za-zÀ-ú.]{2,}.*#\d+", a["titulo"]):
-        frente, costas = outra, capa
-    else:
-        frente, costas = capa, outra
+    # a foto principal é sempre a capa que o vendedor escolheu (camisa inteira)
+    frente = capa
+    costas = outra_face(urls, capa, lambda u: pedir(u).content)
     destino = IMAGENS / pasta
     destino.mkdir(parents=True, exist_ok=True)
     dados_f = foto(urls[frente])
@@ -124,6 +121,28 @@ def processar(a, pasta):
         total += salvar(foto(urls[costas]), destino / "02.webp", LARGURA, QUALIDADE)
         arquivos.append("02.webp")
     return {"pasta": pasta, "arquivos": arquivos, "frente": frente, "costas": costas, "bytes": total}
+
+
+def corrigir_frentes(inv, prog):
+    """Destroca álbuns baixados com a regra antiga (capa ia para 02.webp).
+
+    Não baixa nada: troca 01 e 02 de lugar e refaz a miniatura a partir da nova 01.
+    """
+    n = 0
+    for aid, p in prog.items():
+        capa = inv[aid]["frente"] if inv[aid]["frente"] is not None else 0
+        if p.get("frente") == capa or p.get("costas") != capa or "02.webp" not in p["arquivos"]:
+            continue
+        d = IMAGENS / p["pasta"]
+        if not (d / "01.webp").exists() or not (d / "02.webp").exists():
+            continue
+        (d / "01.webp").rename(d / "tmp.webp")
+        (d / "02.webp").rename(d / "01.webp")
+        (d / "tmp.webp").rename(d / "02.webp")
+        salvar((d / "01.webp").read_bytes(), d / "thumb.webp", LARGURA_THUMB, QUALIDADE_THUMB)
+        p["frente"], p["costas"] = capa, p["frente"]
+        n += 1
+    return n
 
 
 def git(*args):
@@ -193,6 +212,12 @@ def main():
     inv, cla = carregar()
     mapa = pastas(cla)
     prog = json.loads(PROGRESSO.read_text("utf-8")) if PROGRESSO.exists() else {}
+    corrigidos = corrigir_frentes(inv, prog)
+    if corrigidos:
+        PROGRESSO.write_text(json.dumps(prog, ensure_ascii=False), "utf-8")
+        print(f"{corrigidos} álbuns com frente e costas destrocadas", flush=True)
+        if o.commit:
+            publicar(f"Imagens: frente = capa do álbum em {corrigidos} produtos")
     todas = o.secao == "todas"
     fila = [r for r in cla if r["id"] in mapa and r["id"] not in prog
             and (todas or not o.secao or r["secao"] == o.secao) and (not o.liga or r["liga"] == o.liga)]
