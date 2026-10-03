@@ -1,0 +1,50 @@
+name: Baixar imagens
+
+# Dispara de dois jeitos:
+# 1. Botão "Run workflow" na aba Actions, informando a seção.
+# 2. Push que altere pedidos/baixar.txt (a primeira linha é a seção).
+on:
+  workflow_dispatch:
+    inputs:
+      secao:
+        description: "Seção (brasileiros, europeus, selecoes, retro, sul-americanos, norte-americanos, outros)"
+        required: true
+        default: brasileiros
+  push:
+    paths:
+      - pedidos/baixar.txt
+
+permissions:
+  contents: write
+
+concurrency:
+  group: baixar
+  cancel-in-progress: false
+
+jobs:
+  baixar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install requests beautifulsoup4 pillow
+
+      - name: Qual seção
+        id: secao
+        run: |
+          if [ -n "${{ github.event.inputs.secao }}" ]; then
+            echo "secao=${{ github.event.inputs.secao }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "secao=$(head -n1 pedidos/baixar.txt | tr -d '[:space:]')" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Baixar e otimizar
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          python scripts/baixar.py --secao "${{ steps.secao.outputs.secao }}" --commit
