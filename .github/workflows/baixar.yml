@@ -1,21 +1,24 @@
 name: Baixar imagens
 
 # Dispara de dois jeitos:
-# 1. Botão "Run workflow" na aba Actions, informando a seção.
+# 1. Botão "Run workflow" na aba Actions, informando a seção (ou "todas").
 # 2. Push que altere pedidos/baixar.txt (a primeira linha é a seção).
+# Se o tempo do job acabar antes do fim, ele se dispara de novo e continua
+# pelo state/progress.json. Quando termina, publica o site (site.yml).
 on:
   workflow_dispatch:
     inputs:
       secao:
-        description: "Seção (brasileiros, europeus, selecoes, retro, sul-americanos, norte-americanos, outros)"
+        description: "todas, brasileiros, europeus, selecoes, retro, sul-americanos, norte-americanos ou outros"
         required: true
-        default: brasileiros
+        default: todas
   push:
     paths:
       - pedidos/baixar.txt
 
 permissions:
   contents: write
+  actions: write
 
 concurrency:
   group: baixar
@@ -47,4 +50,21 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
-          python scripts/baixar.py --secao "${{ steps.secao.outputs.secao }}" --commit
+          python scripts/baixar.py --secao "${{ steps.secao.outputs.secao }}" --commit --ate-minutos 320
+
+      - name: Continuar ou publicar o site
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          restam=$(cat state/restam.txt 2>/dev/null || echo 0)
+          if [ "$restam" -gt 0 ]; then
+            echo "Faltam $restam álbuns: disparando de novo."
+            curl -sS -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${{ github.repository }}/actions/workflows/baixar.yml/dispatches" \
+              -d "{\"ref\":\"main\",\"inputs\":{\"secao\":\"${{ steps.secao.outputs.secao }}\"}}"
+          else
+            echo "Download concluído: publicando o site."
+            curl -sS -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${{ github.repository }}/actions/workflows/site.yml/dispatches" \
+              -d '{"ref":"main"}'
+          fi

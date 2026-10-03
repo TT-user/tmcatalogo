@@ -1,0 +1,20 @@
+{
+  "_leia": "Preços e pronta entrega. Edite e faça commit: o site é publicado de novo sozinho. precos_por_tipo vale para todos os produtos daquele tipo; precos sobrescreve por produto (use o id que aparece no fim do endereço da página do produto). pronta_entrega: id do produto -> tamanhos em estoque (lista vazia = pronta entrega sem tamanho definido). Valores em reais, sem aspas; null = sob consulta.",
+
+  "precos_por_tipo": {
+    "torcedor": null,
+    "jogador": null,
+    "retro": null,
+    "treino": null,
+    "kit-infantil": null,
+    "agasalho": null,
+    "calcao": null,
+    "camiseta": null,
+    "camisa": null,
+    "acessorio": null
+  },
+
+  "precos": {},
+
+  "pronta_entrega": {}
+}

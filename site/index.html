@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TM Sports · Camisas de times</title>
+  <meta name="description" content="Camisas de times brasileiros, europeus, seleções e retrô. Personalize com nome, número e patch e peça pelo WhatsApp. Envio para todo o Brasil.">
+  <meta property="og:title" content="TM Sports · Camisas de times">
+  <meta property="og:description" content="Escolha, personalize e peça pelo WhatsApp. Envio para todo o Brasil.">
+  <meta name="theme-color" content="#0b1626">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topo">
+    <div class="topo__linha">
+      <a class="marca" href="#/" aria-label="TM Sports, início">
+        <span class="marca__tm">TM</span><span class="marca__nome">SPORTS</span><sup>™</sup>
+      </a>
+      <label class="busca">
+        <span class="visualmente-oculto">Buscar</span>
+        <input id="busca" type="search" placeholder="Buscar time, seleção, temporada…" autocomplete="off">
+      </label>
+      <button class="carrinho-btn" id="abrir-carrinho" type="button" aria-label="Abrir carrinho">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2l2.4 11.2a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 2-1.5L21 8H6.2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="10" cy="20.5" r="1.4" fill="currentColor"/><circle cx="17" cy="20.5" r="1.4" fill="currentColor"/></svg>
+        <span class="carrinho-btn__qtd" id="qtd-carrinho">0</span>
+      </button>
+    </div>
+    <nav class="secoes" id="secoes" aria-label="Seções"></nav>
+  </header>
+
+  <main id="vitrine">
+    <section class="faixa">
+      <p><strong>Camisas de times</strong> · qualidade e preço justo · envio rápido para todo o Brasil · Caparaó-MG</p>
+    </section>
+
+    <section class="filtros" aria-label="Filtros">
+      <div class="filtros__linha">
+        <label class="campo"><span>Liga</span><select id="f-liga"></select></label>
+        <label class="campo"><span>Time</span><select id="f-time"></select></label>
+        <label class="campo"><span>Tipo</span><select id="f-tipo"></select></label>
+      </div>
+      <div class="filtros__linha">
+        <div class="pilulas" id="f-publico" role="group" aria-label="Público"></div>
+        <label class="interruptor"><input type="checkbox" id="f-pronta"><span>Só pronta entrega</span></label>
+      </div>
+      <p class="contagem" id="contagem"></p>
+    </section>
+
+    <section class="grade" id="grade" aria-live="polite"></section>
+    <div class="mais"><button type="button" class="btn btn--claro" id="carregar-mais">Ver mais camisas</button></div>
+  </main>
+
+  <!-- Produto -->
+  <div class="painel" id="produto" hidden>
+    <div class="painel__fundo" data-fechar></div>
+    <article class="produto" role="dialog" aria-modal="true" aria-labelledby="p-titulo">
+      <button class="fechar" type="button" data-fechar aria-label="Fechar">×</button>
+      <div class="produto__fotos">
+        <img id="p-foto" alt="">
+        <div class="produto__miniaturas" id="p-miniaturas"></div>
+      </div>
+      <div class="produto__info">
+        <p class="produto__selo" id="p-selo"></p>
+        <h1 id="p-titulo"></h1>
+        <p class="produto__preco" id="p-preco"></p>
+
+        <fieldset class="bloco">
+          <legend>Tamanho</legend>
+          <div class="tamanhos" id="p-tamanhos"></div>
+        </fieldset>
+
+        <fieldset class="bloco">
+          <legend>Personalização</legend>
+          <label class="opcao"><input type="checkbox" id="p-nome-on"> Nome <em id="p-preco-nome"></em></label>
+          <input class="texto" id="p-nome" maxlength="14" placeholder="Nome nas costas" hidden>
+          <label class="opcao"><input type="checkbox" id="p-numero-on"> Número <em id="p-preco-numero"></em></label>
+          <input class="texto" id="p-numero" inputmode="numeric" maxlength="2" placeholder="Número" hidden>
+          <p class="opcao-titulo">Patches <em id="p-preco-patch"></em></p>
+          <div class="patches" id="p-patches"></div>
+        </fieldset>
+
+        <div class="produto__acao">
+          <div class="qtd">
+            <button type="button" id="p-menos" aria-label="Diminuir">−</button>
+            <output id="p-qtd">1</output>
+            <button type="button" id="p-mais" aria-label="Aumentar">+</button>
+          </div>
+          <button type="button" class="btn" id="p-adicionar">Adicionar ao carrinho</button>
+        </div>
+        <p class="produto__total" id="p-total"></p>
+        <p class="aviso" id="p-aviso" role="alert"></p>
+      </div>
+    </article>
+  </div>
+
+  <!-- Carrinho -->
+  <div class="painel" id="carrinho" hidden>
+    <div class="painel__fundo" data-fechar></div>
+    <aside class="gaveta" role="dialog" aria-modal="true" aria-labelledby="c-titulo">
+      <button class="fechar" type="button" data-fechar aria-label="Fechar">×</button>
+      <h2 id="c-titulo">Seu pedido</h2>
+      <ul class="itens" id="c-itens"></ul>
+      <p class="vazio" id="c-vazio">Seu carrinho está vazio.</p>
+      <div class="gaveta__rodape" id="c-rodape">
+        <p class="total">Total <strong id="c-total"></strong></p>
+        <p class="nota" id="c-nota"></p>
+        <label class="campo"><span>Seu nome</span><input id="c-cliente" autocomplete="name"></label>
+        <label class="campo"><span>Cidade</span><input id="c-cidade" autocomplete="address-level2"></label>
+        <button type="button" class="btn btn--whats" id="c-enviar">Enviar pedido pelo WhatsApp</button>
+        <p class="nota">A mensagem leva o link de cada camisa; o WhatsApp mostra a foto.</p>
+      </div>
+    </aside>
+  </div>
+
+  <footer class="rodape">
+    <p><strong>TM Sports</strong> · Caparaó-MG · <a href="https://instagram.com/tm_sports777" rel="noopener">@tm_sports777</a></p>
+  </footer>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

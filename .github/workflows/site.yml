@@ -1,0 +1,47 @@
+name: Publicar site
+
+# Publica no GitHub Pages quando o site, os preços ou o catálogo mudam.
+# Requer, uma vez: Settings > Pages > Source = "GitHub Actions".
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - site/**
+      - data/loja.json
+      - data/catalogo.json
+      - scripts/gerar_site.py
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Montar o site
+        run: python scripts/gerar_site.py
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - id: deploy
+        uses: actions/deploy-pages@v4

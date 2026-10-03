@@ -26,6 +26,10 @@ CATALOGO = RAIZ / "data" / "catalogo.json"
 IMAGENS = RAIZ / "imagens"
 LOTE_MB = 300
 SIMULTANEAS = 2
+# 800 px: o site inteiro cabe no limite de 1 GB do GitHub Pages (medido: ~0,75 GB)
+LARGURA, QUALIDADE = 800, 74
+LARGURA_THUMB, QUALIDADE_THUMB = 400, 70
+ORDEM_SECOES = ["brasileiros", "europeus", "selecoes", "retro", "sul-americanos", "norte-americanos", "outros"]
 
 MODELO_PT = {"home": "Titular", "away": "Reserva", "third": "Terceira", "fourth": "Quarta",
              "goleiro": "Goleiro", "treino": "Treino", "especial": "Edição Especial"}
@@ -81,11 +85,11 @@ def tamanhos(titulo, publico):
     return TAM_ADULTO[ini:fim + 1] if fim is not None else None
 
 
-def salvar(dados, destino, largura):
+def salvar(dados, destino, largura, qualidade):
     im = ImageOps.exif_transpose(Image.open(io.BytesIO(dados))).convert("RGB")
     if im.width > largura:
         im = im.resize((largura, round(im.height * largura / im.width)), Image.LANCZOS)
-    im.save(destino, "WEBP", quality=80, method=6)  # sem exif: metadados ficam de fora
+    im.save(destino, "WEBP", quality=qualidade, method=6)  # sem exif: metadados ficam de fora
     return destino.stat().st_size
 
 
@@ -113,11 +117,11 @@ def processar(a, pasta):
     destino = IMAGENS / pasta
     destino.mkdir(parents=True, exist_ok=True)
     dados_f = foto(urls[frente])
-    total = salvar(dados_f, destino / "01.webp", 1200)
-    total += salvar(dados_f, destino / "thumb.webp", 400)
+    total = salvar(dados_f, destino / "01.webp", LARGURA, QUALIDADE)
+    total += salvar(dados_f, destino / "thumb.webp", LARGURA_THUMB, QUALIDADE_THUMB)
     arquivos = ["01.webp"]
     if costas is not None:
-        total += salvar(foto(urls[costas]), destino / "02.webp", 1200)
+        total += salvar(foto(urls[costas]), destino / "02.webp", LARGURA, QUALIDADE)
         arquivos.append("02.webp")
     return {"pasta": pasta, "arquivos": arquivos, "frente": frente, "costas": costas, "bytes": total}
 
@@ -128,7 +132,7 @@ def git(*args):
 
 def publicar(msg):
     gerar_catalogo()
-    git("add", "imagens", "state/progress.json", "data/catalogo.json")
+    git("add", "imagens", "state/progress.json", "data/catalogo.json", "state/restam.txt")
     if subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=RAIZ).returncode:
         git("commit", "-q", "-m", msg)
         for n in range(3):
@@ -173,7 +177,8 @@ def gerar_catalogo():
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--secao")
+    ap.add_argument("--secao", help="uma seção ou 'todas'")
+    ap.add_argument("--ate-minutos", type=float, help="para com folga antes do limite do Actions")
     ap.add_argument("--liga")
     ap.add_argument("--limite", type=int, help="processa só N álbuns (teste)")
     ap.add_argument("--commit", action="store_true")
@@ -188,8 +193,14 @@ def main():
     inv, cla = carregar()
     mapa = pastas(cla)
     prog = json.loads(PROGRESSO.read_text("utf-8")) if PROGRESSO.exists() else {}
+    todas = o.secao == "todas"
     fila = [r for r in cla if r["id"] in mapa and r["id"] not in prog
-            and (not o.secao or r["secao"] == o.secao) and (not o.liga or r["liga"] == o.liga)]
+            and (todas or not o.secao or r["secao"] == o.secao) and (not o.liga or r["liga"] == o.liga)]
+    fila.sort(key=lambda r: ORDEM_SECOES.index(r["secao"]) if r["secao"] in ORDEM_SECOES else 99)
+    inicio = time.time()
+    pulados = 0
+    (RAIZ / "state").mkdir(exist_ok=True)
+    (RAIZ / "state" / "restam.txt").write_text(str(len(fila)), "utf-8")
     if o.limite:
         fila = fila[:o.limite]
     alvo = o.secao or o.liga
@@ -198,7 +209,10 @@ def main():
     lote, falhas, feitos = 0, [], 0
 
     def um(r):
-        nonlocal lote, feitos
+        nonlocal lote, feitos, pulados
+        if o.ate_minutos and time.time() - inicio > o.ate_minutos * 60:
+            pulados += 1  # fica para a próxima execução
+            return
         try:
             res = processar(inv[r["id"]], mapa[r["id"]])
         except Exception as e:
@@ -220,10 +234,12 @@ def main():
     with ThreadPoolExecutor(SIMULTANEAS) as ex:
         list(ex.map(um, fila))
 
+    (RAIZ / "state").mkdir(exist_ok=True)
+    (RAIZ / "state" / "restam.txt").write_text(str(pulados), "utf-8")
     n = gerar_catalogo()
     if o.commit:
         publicar(f"Imagens: {alvo} concluída ({feitos} álbuns)")
-    print(f"fim: {feitos}/{len(fila)} baixados, {len(falhas)} falhas; catálogo com {n} produtos", flush=True)
+    print(f"fim: {feitos}/{len(fila)} baixados, {len(falhas)} falhas, {pulados} para a próxima; catálogo com {n} produtos", flush=True)
     for f in falhas:
         print("  falha:", *f, flush=True)
 
