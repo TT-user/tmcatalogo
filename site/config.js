@@ -1,4 +1,4 @@
-// Configuração da loja. Edite aqui e faça commit: o site é publicado de novo sozinho.
+// Configuração da loja. Edite aqui e faça commit: o site é publicado de novo sozinho (1-2 min).
 window.TM_CONFIG = {
   // Número do WhatsApp da loja, só dígitos, com 55 e DDD. Ex.: "5532999998888".
   // Vazio: o WhatsApp abre e o cliente escolhe a conversa.
